@@ -1,15 +1,26 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-export default function App() {
+import React from 'react';
+
+const get_full_name = (animal) => {
+  if (animal == 'cat'){
+    return 'Spidey'
+  }
+  else{
+    return 'Bob'
+  }
+}
+const Cat = () => {
+  const name = 'spidey';
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <Text>Hello, I am your cat {get_full_name('cat')}!</Text>
+  </View>
   );
-}
+};
 
+export default Cat;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
