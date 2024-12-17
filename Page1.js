@@ -25,7 +25,6 @@ const Page1 = () => {
     );
   };
   
-  //export default Cat;
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -39,5 +38,8 @@ const Page1 = () => {
       borderWidth: 1,
       padding: 10,
     },
+    map:{
+        flex: 1,
+    }
   });
 export default Page1
