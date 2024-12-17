@@ -1,38 +1,18 @@
-import { StatusBar } from 'expo-status-bar';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-
 import React from 'react';
+import { createStackNavigator } from '@react-navigation/stack';
+import { NavigationContainer } from '@react-navigation/native';
+import Page1 from './Page1';
+import Page2 from './Page2';
+const Stack = createStackNavigator();
 
-const Cat = () => {
-  const [name, setName] = React.useState('Spidey');
-  //const [text, onChangeText] = React.useState('Useless Text');
+export default function MyNavigator() {
   return (
-    <View style={styles.container}>
-    <TextInput
-    style= {styles.input}
-      onChangeText={(t) => {
-        console.log('Text input changed to:', t)
-        setName(t)}
-      }
-      defaultValue="Enter name here"
-    />
-    <Text>Hello, I am your cat {name}!</Text>
-  </View>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Page1" component={Page1} />
+        <Stack.Screen name="Page2" component={Page2} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-};
+}
 
-export default Cat;
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  input: {
-    height: 40,
-    margin: 12,
-    borderWidth: 1,
-    padding: 10,
-  },
-});
