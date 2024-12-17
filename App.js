@@ -1,21 +1,22 @@
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import React from 'react';
 
-const get_full_name = (animal) => {
-  if (animal == 'cat'){
-    return 'Spidey'
-  }
-  else{
-    return 'Bob'
-  }
-}
 const Cat = () => {
-  const name = 'spidey';
+  const [name, setName] = React.useState('Spidey');
+  //const [text, onChangeText] = React.useState('Useless Text');
   return (
     <View style={styles.container}>
-    <Text>Hello, I am your cat {get_full_name('cat')}!</Text>
+    <TextInput
+    style= {styles.input}
+      onChangeText={(t) => {
+        console.log('Text input changed to:', t)
+        setName(t)}
+      }
+      defaultValue="Enter name here"
+    />
+    <Text>Hello, I am your cat {name}!</Text>
   </View>
   );
 };
@@ -27,5 +28,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  input: {
+    height: 40,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
   },
 });
