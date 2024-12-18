@@ -1,16 +1,22 @@
 import React from 'react';
 import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import MapView from 'react-native-maps';
 
-export default function Page2 (){
-    const navigation = useNavigation();
-    const MyNavigator = MyNavigator;
+export default function Map() {
     return (
-    <View>
-        <Text>Hi</Text>
-        <Button 
-        title = "Go to Page1"
-        onPress={() => navigation.navigate('Page1')} />
-    </View>
-    )
-}
+      <View style={styles.container}>
+        <MapView style={styles.map} />
+      </View>
+    );
+  }
+  
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    map: {
+      width: '100%',
+      height: '100%',
+    },
+  });

@@ -18,14 +18,13 @@ const Page1 = () => {
       />
       <Text>Hello, I am your cat {name}!</Text>
       <Button 
-        title="Go to Page2"
+        title="View Map"
         onPress={() => navigation.navigate('Page2')}
       />
     </View>
     );
   };
   
-  //export default Cat;
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -33,11 +32,18 @@ const Page1 = () => {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    container2: {
+      flex: 1,
+    },
     input: {
       height: 40,
       margin: 12,
       borderWidth: 1,
       padding: 10,
     },
+    map:{
+        width: '100%',
+        height: '100%',
+    }
   });
 export default Page1
