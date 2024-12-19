@@ -1,3 +1,5 @@
+import { collection, getDocs, addDoc } from 'firebase/firestore/lite';
+import db from './firebaseConfig'
 
 async function getCollection(db) {
     const Col = collection(db, 'user');
@@ -5,17 +7,17 @@ async function getCollection(db) {
     //const cityList = citySnapshot.docs.map(doc => doc.data());
     return Col;
   }
+
+
 // Function to add a document to Firestore
-async function addToFirestore() {
+async function addToFirestore(username) {
     try {
         // Await the collection reference
         const myCol = await getCollection(db);
 
         // Add a document to the collection
         const docRef = await addDoc(myCol, {
-            name: "John Doe",
-            age: 30,
-            city: "New York"
+            name: username,
         });
 
         console.log("Document written with ID: ", docRef.id);
@@ -24,3 +26,4 @@ async function addToFirestore() {
         console.error("Error adding document: ", e);
     }
 }
+export default addToFirestore

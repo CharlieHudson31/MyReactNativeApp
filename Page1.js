@@ -1,26 +1,31 @@
 import React from 'react';
 import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
+import addToFireStore from './firestore.js'
 const Page1 = () => {
     const [name, setName] = React.useState('Spidey');
     const navigation = useNavigation();
     //const [text, onChangeText] = React.useState('Useless Text');
     return (
       <View style={styles.container}>
+            <Text>Username:</Text>
       <TextInput
       style= {styles.input}
         onChangeText={(t) => {
           console.log('Text input changed to:', t)
           setName(t)}
         }
-        defaultValue="Enter name here"
+        defaultValue=""
       />
-      <Text>Hello, I am your cat {name}!</Text>
       <Button 
         title="View Map"
         onPress={() => navigation.navigate('Page2')}
       />
+      <Button 
+      title="Submit Username"
+      onPress={
+        ()=>addToFireStore(name)
+      }></Button>
     </View>
     );
   };
@@ -37,6 +42,7 @@ const Page1 = () => {
     },
     input: {
       height: 40,
+      width: 120,
       margin: 12,
       borderWidth: 1,
       padding: 10,
