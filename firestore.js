@@ -1,6 +1,6 @@
 import { collection, getDocs, addDoc } from 'firebase/firestore/lite';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import db from './firebaseConfig'
+import {db, auth} from './firebaseConfig'
 
 async function getCollection(db) {
     const Col = collection(db, 'user');
@@ -39,7 +39,7 @@ async function signUp(email, password) {
 }
 
 // Log in an existing user
-async function logIn(email, password) {
+export async function logIn(email, password) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user
