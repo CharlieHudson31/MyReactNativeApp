@@ -29,12 +29,13 @@ async function addToFirestore(username) {
 }
 
 // Sign up a new user
-async function signUp(email, password) {
+export async function signUp(email, password) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         console.log("User signed up:", userCredential.user);
     } catch (error) {
         console.error("Error signing up:", error);
+        throw error;
     }
 }
 
@@ -48,6 +49,7 @@ export async function logIn(email, password) {
         
     } catch (error) {
         console.error("Error logging in:", error);
+        throw error;
     }
 }
 

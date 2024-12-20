@@ -22,12 +22,16 @@ const login = () =>{
             setPassword(t)}}
         />
         <Button title="Submit"
-        onPress={() => {
-            var uid = logIn(email, password)
-            console.log("email: " + email + "\npassword: " + password)
-            console.log("uid: " + uid)}
-        }
-        />
+        onPress={async () => {
+            try{
+                var uid = await logIn(email, password)
+                console.log("email: " + email + "\npassword: " + password)
+                console.log("uid: " + uid)
+                navigation.navigate('Page1')
+            }
+            catch (error){
+                alert("Log in failed: " + error.message)
+            }}}/>
     </View>
     )
 }
