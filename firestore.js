@@ -1,5 +1,6 @@
 import { collection, getDocs, addDoc } from 'firebase/firestore/lite';
-import db from './firebaseConfig'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import {db, auth} from './firebaseConfig'
 
 async function getCollection(db) {
     const Col = collection(db, 'user');
@@ -26,4 +27,30 @@ async function addToFirestore(username) {
         console.error("Error adding document: ", e);
     }
 }
+
+// Sign up a new user
+export async function signUp(email, password) {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log("User signed up:", userCredential.user);
+    } catch (error) {
+        console.error("Error signing up:", error);
+        throw error;
+    }
+}
+
+// Log in an existing user
+export async function logIn(email, password) {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user
+        console.log("User logged in:", user.uid);
+        return user.uid
+        
+    } catch (error) {
+        console.error("Error logging in:", error);
+        throw error;
+    }
+}
+
 export default addToFirestore
