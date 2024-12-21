@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {signUp} from './firestore'
+import styles from './styles'
 const signup = () =>{
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('')
@@ -35,21 +36,5 @@ const signup = () =>{
     </View>
     )
 }
-
-const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#fff',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    input: {
-      height: 40,
-      width: 120,
-      margin: 12,
-      borderWidth: 1,
-      padding: 10,
-    },
-  });
 
 export default signup

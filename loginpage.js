@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import {logIn} from './firestore'
 import { useNavigation } from '@react-navigation/native';
+import styles from './styles'
 const login = () =>{
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('')
@@ -36,19 +37,4 @@ const login = () =>{
     )
 }
 
-const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#fff',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    input: {
-      height: 40,
-      width: 120,
-      margin: 12,
-      borderWidth: 1,
-      padding: 10,
-    },
-  });
 export default login
