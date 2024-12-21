@@ -1,6 +1,7 @@
 import React from 'react';
-import { Button, ScrollView, StyleSheet, Text, TextInput, View, Image, Dimensions } from 'react-native';
+import { Button, ScrollView, Text, TextInput, View, Image, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import styles from './styles'
 //import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area'
 const { window_width, window_height } = Dimensions.get('window');
 const signin = () =>{
@@ -23,24 +24,4 @@ const signin = () =>{
     </View>
     )
 }
-const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#fff',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    input: {
-      height: 40,
-      width: 120,
-      margin: 12,
-      borderWidth: 1,
-      padding: 10,
-    },
-    logo: {
-        width: 200,
-        height: 200,
-      },
-  });
-
 export default signin
