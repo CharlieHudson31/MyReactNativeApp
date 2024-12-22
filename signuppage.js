@@ -25,9 +25,7 @@ const signup = () =>{
         <Button title="Submit"
         onPress={async () => {
             try{
-                var uid = await signUp(email, password)
-                console.log("email: " + email + "\npassword: " + password)
-                console.log("uid: " + uid)
+                await signUp(email, password)
                 navigation.navigate('Page1')
             }
             catch (error){
