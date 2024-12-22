@@ -13,7 +13,7 @@ const login = () =>{
         <TextInput 
         style={styles.input}
         onChangeText={(t) => {
-            console.log('Text input changed to:', t)
+            //console.log('Text input changed to:', t)
             setEmail(t)}}
         />
         <Text>Enter password (The one used for this app, not for your email):</Text>
@@ -26,8 +26,8 @@ const login = () =>{
         onPress={async () => {
             try{
                 var uid = await logIn(email, password)
-                console.log("email: " + email + "\npassword: " + password)
-                console.log("uid: " + uid)
+                //console.log("email: " + email + "\npassword: " + password)
+                //console.log("uid: " + uid)
                 navigation.navigate('Page1')
             }
             catch (error){
