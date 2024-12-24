@@ -6,15 +6,14 @@ import styles from './styles'
 const { window_width, window_height } = Dimensions.get('window');
 const signin = () =>{
     navigation = useNavigation()
-    
     return (
     <View style={styles.container}>
-        <Button title="Sign up"
+        <Text style={styles.title}>Beer App</Text>
+        <Button 
+        title="Sign up"
         onPress={() => navigation.navigate('signuppage')}/>
         <Button title="Log in"
         onPress={() => navigation.navigate('loginpage')}/>
-
-
         <Image
             style={styles.logo}
             source={require('./assets/Beer_Icon.png')}
