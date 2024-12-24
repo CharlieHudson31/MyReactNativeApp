@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import { Button, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import {getDocumentById} from './firestore.js'
+import {addToUserFriendsListByEmail, getDocumentById} from './firestore.js'
 import styles from './styles.js'
 import { useAuth } from './firebaseConfig.js';
 
@@ -40,7 +40,7 @@ export const UserProfile = ({ userUid }) => {
 
   // Render the user profile data only if userData is defined
   return (
-      <View  style={styles.container}>
+      <View>
           {userData && userData.email ? (
               <Text style={styles.subtext}>{userData.email}</Text> // Only render email if userData exists and email is present
           ) : (
@@ -60,12 +60,18 @@ export const UserProfile = ({ userUid }) => {
   );
 };
 const FriendsList = () => {
+    const [friendEmail, setFriendEmail] = React.useState('');
     const userUid = useAuth();
     const navigation = useNavigation();
     //const [text, onChangeText] = React.useState('Useless Text');
     return (
       <View style={styles.container}>
       {userUid ? <UserProfile userUid={userUid} /> : null}
+      <TextInput style={styles.input}
+      onChangeText={(t) => {
+        setFriendEmail(t)}}></TextInput>
+      <Button title="Add friend"
+      onPress={()=>addToUserFriendsListByEmail(userUid, friendEmail)}/>
     </View>
     );
   };
