@@ -35,7 +35,7 @@ export async function addToUserFriendsListByEmail(userUid, friendEmail) {
   
         // Step 2: Extract the friend's UID from the query result
         const friendDoc = querySnapshot.docs[0];
-        const friendUid = friendDoc.id; // Assuming the document ID is the friend's UID
+        const friendEmailFromDoc = friendDoc.data().email;
   
         // Step 3: Reference to the user's document by their UID
         const userDocRef = doc(db, 'user', userUid);
@@ -51,8 +51,8 @@ export async function addToUserFriendsListByEmail(userUid, friendEmail) {
             const updatedFriendsList = userData.friendsList || [];
   
             // Add the new friend UID to the friends list (if not already present)
-            if (!updatedFriendsList.includes(friendUid)) {
-                updatedFriendsList.push(friendUid);
+            if (!updatedFriendsList.includes(friendEmailFromDoc)) {
+                updatedFriendsList.push(friendEmailFromDoc);
   
                 // Update the document with the new friends list
                 await updateDoc(userDocRef, {
