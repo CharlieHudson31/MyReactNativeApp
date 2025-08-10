@@ -1,27 +1,66 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, ActivityIndicator, Button } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import styles from './styles';
+import Constants from 'expo-constants';
+
+const GOOGLE_MAPS_KEY = Constants.expoConfig.extra.googleMapsKey;
+
+async function fetchNearestBars(lat, lng) {
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=bar&key=${GOOGLE_MAPS_KEY}`;
+  try {
+    const response = await fetch(url);
+    const json = await response.json();
+    if (json.status === 'OK' && json.results.length > 0) {
+      return json.results.slice(0, 5);
+    } else {
+      console.warn('No bars found or API error:', json.status, json.error_message);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching places:', error);
+    return [];
+  }
+}
 
 export default function Map() {
   const [location, setLocation] = useState(null);
+  const [nearestBars, setNearestBars] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      // Request permission to access location
+  // Extracted function to get location and bars
+  const updateLocationAndBars = useCallback(async () => {
+    setLoading(true);
+    try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
+        setLoading(false);
         return;
       }
 
-      // Get the current position
-      let currentLocation = await Location.getCurrentPositionAsync({});
+      const currentLocation = await Location.getCurrentPositionAsync({});
       setLocation(currentLocation.coords);
-    })();
+
+      const bars = await fetchNearestBars(currentLocation.coords.latitude, currentLocation.coords.longitude);
+      setNearestBars(bars);
+    } catch (error) {
+      setErrorMsg('Error getting location or bars.');
+      console.error(error);
+    }
+    setLoading(false);
   }, []);
+
+  // On mount, fetch initial data
+  useEffect(() => {
+    updateLocationAndBars();
+
+    // Optional: auto-refresh every 60 seconds
+    // const intervalId = setInterval(updateLocationAndBars, 60000);
+    // return () => clearInterval(intervalId);
+  }, [updateLocationAndBars]);
 
   if (errorMsg) {
     return (
@@ -40,7 +79,7 @@ export default function Map() {
   }
 
   return (
-    <View style={styles.map_container}>
+    <View style={{ flex: 1 }}>
       <MapView
         style={styles.map}
         initialRegion={{
@@ -49,7 +88,7 @@ export default function Map() {
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
-        showsUserLocation={true} // Optional: shows blue dot on iOS/Android
+        showsUserLocation={true}
       >
         <Marker
           coordinate={{
@@ -57,8 +96,32 @@ export default function Map() {
             longitude: location.longitude,
           }}
           title="You are here"
+          pinColor="blue"
         />
+
+        {nearestBars.map((bar) => (
+          <Marker
+            key={bar.place_id}
+            coordinate={{
+              latitude: bar.geometry.location.lat,
+              longitude: bar.geometry.location.lng,
+            }}
+            title={bar.name}
+            description={bar.vicinity}
+            pinColor="orange"
+          />
+        ))}
       </MapView>
+
+      <View style={{ position: 'absolute', top: 40, left: 10, right: 10, alignItems: 'center' }}>
+        <Button title="Refresh Location & Bars" onPress={updateLocationAndBars} disabled={loading} />
+      </View>
+
+      {loading && (
+        <View style={{ position: 'absolute', top: 10, left: 10, backgroundColor: 'white', padding: 8, borderRadius: 4 }}>
+          <Text>Loading...</Text>
+        </View>
+      )}
     </View>
   );
 }
