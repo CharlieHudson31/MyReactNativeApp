@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ActivityIndicator, Button } from 'react-native';
+import { View, Text, ActivityIndicator, Button, Alert } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import styles from './styles';
@@ -24,18 +24,28 @@ async function fetchNearestBars(lat, lng) {
   }
 }
 
+// Euclidean distance approximation (miles)
+function getDistanceMiles(lat1, lon1, lat2, lon2) {
+  const latDist = (lat2 - lat1) * 69; // miles per degree latitude
+  const lonDist = (lon2 - lon1) * 69 * Math.cos((lat1 * Math.PI) / 180); // scale by latitude
+  return Math.sqrt(latDist ** 2 + lonDist ** 2);
+}
+
 export default function Map() {
   const [location, setLocation] = useState(null);
   const [nearestBars, setNearestBars] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [activePath, setActivePath] = useState([]); // only one path now
+
+  const [activePath, setActivePath] = useState([]); 
   const [pathActive, setPathActive] = useState(false); 
+  const [visitedBars, setVisitedBars] = useState([]); 
+
   // Get location + bars
   const updateLocationAndBars = useCallback(async () => {
     setLoading(true);
     try {
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
         setLoading(false);
@@ -78,6 +88,8 @@ export default function Map() {
     );
   }
 
+  const MAX_DISTANCE = 40; // miles
+
   return (
     <View style={{ flex: 1 }}>
       <MapView
@@ -112,17 +124,50 @@ export default function Map() {
             description={bar.vicinity}
             pinColor="orange"
             onPress={() => {
-              if (!pathActive) return;
-              const newPoint = {
-                latitude: bar.geometry.location.lat,
-                longitude: bar.geometry.location.lng,
-                name: bar.name,
-              };
-              setActivePath([...activePath, newPoint]);
+              if (!location) return;
+
+              const distance = getDistanceMiles(
+                location.latitude,
+                location.longitude,
+                bar.geometry.location.lat,
+                bar.geometry.location.lng
+              );
+
+              if (distance <= MAX_DISTANCE) {
+                if (!visitedBars.find((b) => b.place_id === bar.place_id)) {
+                  setVisitedBars([...visitedBars, bar]);
+                }
+              } else {
+                Alert.alert("Too far!", "You must be closer to mark this bar as visited.");
+              }
             }}
           />
         ))}
 
+        {/* Visited bars */}
+        {visitedBars.map((bar) => (
+          <Marker
+            key={`visited-${bar.place_id}`}
+            coordinate={{
+              latitude: bar.geometry.location.lat,
+              longitude: bar.geometry.location.lng,
+            }}
+            title={bar.name}
+            pinColor="green"
+          />
+        ))}
+        {/* Preview path connecting visited bars */}
+        {pathActive && visitedBars.length > 0 && (
+          <Polyline
+            coordinates={visitedBars.map((bar) => ({
+              latitude: bar.geometry.location.lat,
+              longitude: bar.geometry.location.lng,
+            }))}
+            strokeColor="#8888FF"
+            strokeWidth={2}
+            lineDashPattern={[5, 5]} // creates dotted/dashed line
+          />
+        )}
         {/* Active path */}
         {activePath.length > 0 && (
           <Polyline coordinates={activePath} strokeColor="#00AAFF" strokeWidth={3} />
@@ -134,15 +179,7 @@ export default function Map() {
         <Button title="Refresh Location & Bars" onPress={updateLocationAndBars} disabled={loading} />
       </View>
 
-      <View
-        style={{
-          position: 'absolute',
-          top: 80,
-          left: 10,
-          right: 10,
-          alignItems: 'center',
-        }}
-      >
+      <View style={{ position: 'absolute', top: 80, left: 10, right: 10, alignItems: 'center' }}>
         <Button
           title="Start New Path"
           onPress={() => {
@@ -152,34 +189,21 @@ export default function Map() {
         />
       </View>
 
-      <View
-        style={{
-          position: 'absolute',
-          top: 120,
-          left: 10,
-          right: 10,
-          alignItems: 'center',
-        }}
-      >
+      <View style={{ position: 'absolute', top: 120, left: 10, right: 10, alignItems: 'center' }}>
         <Button
-          title="Stop Path"
+          title="Visited → Path"
           onPress={() => {
-            setPathActive(false);
+            const newPath = visitedBars.map((bar) => ({
+              latitude: bar.geometry.location.lat,
+              longitude: bar.geometry.location.lng,
+              name: bar.name,
+            }));
+            setActivePath(newPath);
+            setVisitedBars([]);
+            setPathActive(true);
           }}
-          disabled={!pathActive}
+          disabled={visitedBars.length === 0}
         />
-      </View>
-
-      <View
-        style={{
-          position: 'absolute',
-          top: 140,
-          left: 10,
-          right: 10,
-          alignItems: 'center',
-        }}
-      >
-        <Button title="Clear Path" onPress={() => setActivePath([])} />
       </View>
 
       {loading && (
