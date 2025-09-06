@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Button, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, Button, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { savePath } from './paths_db';
 
 export default function ViewPaths({ route, navigation }) {
   const { path, onSave } = route.params;
@@ -10,9 +11,28 @@ export default function ViewPaths({ route, navigation }) {
     setEditablePath((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handlePublishPath = async () => {
+    if (!editablePath || editablePath.length === 0) {
+      Alert.alert("Cannot publish", "Path is empty!");
+      return;
+    }
+
+    const notes = "Default Notes"; // Replace with user input if you add a notes field
+
+    try {
+      console.log("Attempting to save path...");
+      await savePath(editablePath, notes);
+      console.log("Path saved successfully!");
+      Alert.alert("Success", "Path published successfully!");
+    } catch (error) {
+      console.error("Error saving path:", error);
+      Alert.alert("Error", "Failed to save path.");
+    }
+  };
+
   return (
-    <View>
-      <Text>Edit Path:</Text>
+    <View style={{ flex: 1 }}>
+      <Text style={{ padding: 10 }}>Edit Path:</Text>
 
       <FlatList
         data={editablePath}
@@ -38,10 +58,17 @@ export default function ViewPaths({ route, navigation }) {
       <Button
         title="Save Changes"
         onPress={() => {
-          onSave(editablePath); // 
+          onSave(editablePath);
           navigation.goBack();
         }}
       />
+
+      <View style={{ position: 'absolute', top: 20, left: 10, right: 100, alignItems: 'center' }}>
+        <Button
+          title="Publish Path"
+          onPress={handlePublishPath}
+        />
+      </View>
     </View>
   );
 }
