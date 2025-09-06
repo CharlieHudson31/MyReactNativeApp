@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ActivityIndicator, Button, Alert } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import styles from './styles';
 import Constants from 'expo-constants';
@@ -40,7 +41,7 @@ export default function Map() {
   const [activePath, setActivePath] = useState([]); 
   const [pathActive, setPathActive] = useState(false); 
   const [visitedBars, setVisitedBars] = useState([]); 
-
+  const [pathCompleted, setPathCompleted] = useState(false);
   // Get location + bars
   const updateLocationAndBars = useCallback(async () => {
     setLoading(true);
@@ -185,13 +186,14 @@ export default function Map() {
           onPress={() => {
             setActivePath([]);
             setPathActive(true);
+            setPathCompleted(false);
           }}
         />
       </View>
 
       <View style={{ position: 'absolute', top: 120, left: 10, right: 10, alignItems: 'center' }}>
         <Button
-          title="Visited → Path"
+          title="Complete Path"
           onPress={() => {
             const newPath = visitedBars.map((bar) => ({
               latitude: bar.geometry.location.lat,
@@ -201,11 +203,23 @@ export default function Map() {
             setActivePath(newPath);
             setVisitedBars([]);
             setPathActive(true);
+            setPathCompleted(true);
           }}
           disabled={visitedBars.length === 0}
         />
       </View>
+      <View style={{ position: 'absolute', top: 20, left: 10, right: 100, alignItems: 'center' }}>
+          <Button
+          title="Edit Path"
+          onPress={() =>
+            navigation.navigate('ViewPaths', {
+              path: activePath,
+              onSave: (updatedPath) => setActivePath(updatedPath), // callback
+            })}
+          disabled={!pathCompleted}
+          />
 
+      </View>
       {loading && (
         <View
           style={{
