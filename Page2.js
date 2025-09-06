@@ -204,6 +204,7 @@ export default function Map() {
             setVisitedBars([]);
             setPathActive(true);
             setPathCompleted(true);
+            
           }}
           disabled={visitedBars.length === 0}
         />

@@ -112,7 +112,6 @@ export async function add_user_to_db(uid, user_email){
         // Check if the document already exists
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
-            // Document exists, let's update the friends list
             throw new Error(`Document with ID ${uid} already exists.`);
         } else {
             const data = {
