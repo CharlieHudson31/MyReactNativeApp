@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, Button, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Button, FlatList, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { savePath } from './paths_db';
+import { auth } from './firebaseConfig';
 
 export default function ViewPaths({ route, navigation }) {
   const { path, onSave } = route.params;
   const [editablePath, setEditablePath] = useState(path);
+  const [notes, setNotes] = useState(""); // <-- state for notes
+
+  console.log("Current user:", auth.currentUser);
 
   // Remove a bar from the path
   const removeBar = (index) => {
@@ -17,13 +21,12 @@ export default function ViewPaths({ route, navigation }) {
       return;
     }
 
-    const notes = "Default Notes"; // Replace with user input if you add a notes field
-
     try {
       console.log("Attempting to save path...");
       await savePath(editablePath, notes);
       console.log("Path saved successfully!");
       Alert.alert("Success", "Path published successfully!");
+      setNotes(""); // clear after save
     } catch (error) {
       console.error("Error saving path:", error);
       Alert.alert("Error", "Failed to save path.");
@@ -31,8 +34,8 @@ export default function ViewPaths({ route, navigation }) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={{ padding: 10 }}>Edit Path:</Text>
+    <View style={{ flex: 1, padding: 10 }}>
+      <Text style={{ marginBottom: 5 }}>Edit Path:</Text>
 
       <FlatList
         data={editablePath}
@@ -55,19 +58,31 @@ export default function ViewPaths({ route, navigation }) {
         )}
       />
 
+      {/* Notes input */}
+      <Text style={{ marginTop: 15, marginBottom: 5 }}>Notes:</Text>
+      <TextInput
+        style={{
+          borderWidth: 1,
+          borderColor: '#ccc',
+          padding: 10,
+          borderRadius: 5,
+          marginBottom: 15,
+        }}
+        placeholder="Enter notes for this path..."
+        value={notes}
+        onChangeText={setNotes}
+        multiline
+      />
+
       <Button
         title="Save Changes"
         onPress={() => {
           onSave(editablePath);
-          navigation.goBack();
         }}
       />
 
-      <View style={{ position: 'absolute', top: 20, left: 10, right: 100, alignItems: 'center' }}>
-        <Button
-          title="Publish Path"
-          onPress={handlePublishPath}
-        />
+      <View style={{ marginTop: 15 }}>
+        <Button title="Publish Path" onPress={handlePublishPath} />
       </View>
     </View>
   );
