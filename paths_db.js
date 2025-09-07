@@ -15,9 +15,9 @@ export async function savePath(path, notes) {
   // Ensure the path document exists (but don't overwrite)
   await setDoc(pathRef, { coordinates: path }, { merge: true });
 
-  // ✅ Correct way to get subcollection
-  const entriesRef = collection(pathRef, "entries");
-  await addDoc(entriesRef, {
+
+  const infoRef = collection(pathRef, "info");
+  await addDoc(infoRef, {
     notes,
     createdAt: Timestamp.now(), // Client timestamp
   });
@@ -26,13 +26,13 @@ export async function savePath(path, notes) {
 }
 
 /**
- * Get all entries for a path
+ * 
  * @param {Array} path
  */
 export async function getEntriesForPath(path) {
   const pathId = getPathId(path);
   const pathRef = doc(db, "paths", pathId);
-  const entriesRef = collection(pathRef, "entries"); // must pass DocumentReference
+  const entriesRef = collection(pathRef, "info"); 
   const snapshot = await getDocs(entriesRef);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
