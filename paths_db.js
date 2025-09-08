@@ -7,19 +7,19 @@ import db, {auth} from './firebaseConfig'
  */
 export async function savePath(path, notes) {
   const pathId = getPathId(path);
-  const pathRef = doc(db, 'paths', pathId); // Document reference
-  console.log("Saving path with ID:", pathId);
-    if (!pathRef) {
-      console.error("Error saving path:", error);
-    }
-  // Ensure the path document exists (but don't overwrite)
-  await setDoc(pathRef, { coordinates: path }, { merge: true });
-
+  const pathRef = doc(db, 'paths', pathId);
+  const startPlaceId = path[0]?.place_id || null;
+    await setDoc(pathRef, {
+    coordinates: path,
+    start: path[0],
+    startPlaceId: startPlaceId,
+    createdAt: Timestamp.now(),
+    }, { merge: true });
 
   const infoRef = collection(pathRef, "info");
   await addDoc(infoRef, {
     notes,
-    createdAt: Timestamp.now(), // Client timestamp
+    createdAt: Timestamp.now(),
   });
 
   console.log("Path entry added successfully!");
@@ -40,4 +40,15 @@ export async function getEntriesForPath(path) {
 // Generate an ID for a path
 function getPathId(path) {
   return path.map(c => `${c.latitude},${c.longitude}`).join("|");
+}
+
+export async function getPathsStartingFromBar(placeId) {
+  const pathsRef = collection(db, "paths");
+  const q = query(pathsRef, where("startPlaceId", "==", placeId));
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 }

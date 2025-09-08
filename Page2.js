@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ActivityIndicator, Button, Alert } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import styles from './styles';
@@ -42,6 +42,8 @@ export default function Map() {
   const [pathActive, setPathActive] = useState(false); 
   const [visitedBars, setVisitedBars] = useState([]); 
   const [pathCompleted, setPathCompleted] = useState(false);
+  const [stored_barPaths, setStoredBarPaths] = useState([]);
+
   // Get location + bars
   const updateLocationAndBars = useCallback(async () => {
     setLoading(true);
@@ -88,7 +90,17 @@ export default function Map() {
       </View>
     );
   }
+  const handleShowPaths = async (bar) => {
+    const paths = await getPathsStartingFromBar(bar.place_id);
 
+    const colors = ["#FF0000", "#00AA00", "#0000FF"];
+    const formatted = paths.map((p, i) => ({
+      coordinates: p.coordinates,
+      color: colors[i % colors.length],
+    }));
+
+    setStoredBarPaths(formatted);
+  };
   const MAX_DISTANCE = 40; // miles
 
   return (
@@ -112,39 +124,46 @@ export default function Map() {
           title="You are here"
           pinColor="blue"
         />
-
         {/* Bars */}
-        {nearestBars.map((bar) => (
-          <Marker
-            key={bar.place_id}
-            coordinate={{
-              latitude: bar.geometry.location.lat,
-              longitude: bar.geometry.location.lng,
-            }}
-            title={bar.name}
-            description={bar.vicinity}
-            pinColor="orange"
-            onPress={() => {
-              if (!location) return;
+      {nearestBars.map((bar) => (
+        <Marker
+          key={bar.place_id}
+          coordinate={{
+            latitude: bar.geometry.location.lat,
+            longitude: bar.geometry.location.lng,
+          }}
+          title={bar.name}
+          description={bar.vicinity}
+          pinColor="orange"
+          onPress={() => {
+            if (!location) return;
 
-              const distance = getDistanceMiles(
-                location.latitude,
-                location.longitude,
-                bar.geometry.location.lat,
-                bar.geometry.location.lng
-              );
+            const distance = getDistanceMiles(
+              location.latitude,
+              location.longitude,
+              bar.geometry.location.lat,
+              bar.geometry.location.lng
+            );
 
-              if (distance <= MAX_DISTANCE) {
-                if (!visitedBars.find((b) => b.place_id === bar.place_id)) {
-                  setVisitedBars([...visitedBars, bar]);
-                }
-              } else {
-                Alert.alert("Too far!", "You must be closer to mark this bar as visited.");
+            if (distance <= MAX_DISTANCE) {
+              if (!visitedBars.find((b) => b.place_id === bar.place_id)) {
+                setVisitedBars([...visitedBars, bar]);
               }
-            }}
-          />
-        ))}
-
+            } else {
+              Alert.alert("Too far!", "You must be closer to mark this bar as visited.");
+            }
+          }}
+        >
+          {/* Custom callout with a button */}
+          <Callout onPress={() => handleShowPaths(bar)}>
+            <View style={{ padding: 6 }}>
+              <Text style={{ fontWeight: "bold" }}>{bar.name}</Text>
+              <Text>{bar.vicinity}</Text>
+              <Button title="Show Paths" onPress={() => handleShowPaths(bar)} />
+            </View>
+          </Callout>
+        </Marker>
+      ))}
         {/* Visited bars */}
         {visitedBars.map((bar) => (
           <Marker
@@ -173,6 +192,18 @@ export default function Map() {
         {activePath.length > 0 && (
           <Polyline coordinates={activePath} strokeColor="#00AAFF" strokeWidth={3} />
         )}
+
+        {stored_barPaths.map((path, index) => {
+        const colors = ["#FF0000", "#00FF00", "#0000FF"];
+        return (
+          <Polyline
+            key={path.id}
+            coordinates={path.coordinates}
+            strokeColor={colors[index % colors.length]}
+            strokeWidth={3}
+          />
+        );
+      })}
       </MapView>
 
       {/* Buttons */}
@@ -199,6 +230,7 @@ export default function Map() {
               latitude: bar.geometry.location.lat,
               longitude: bar.geometry.location.lng,
               name: bar.name,
+              place_id: bar.place_id,
             }));
             setActivePath(newPath);
             setVisitedBars([]);
@@ -238,3 +270,4 @@ export default function Map() {
     </View>
   );
 }
+
