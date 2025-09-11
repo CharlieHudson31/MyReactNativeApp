@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ActivityIndicator, Button, Alert } from 'react-native';
-import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import styles from './styles';
 import Constants from 'expo-constants';
+import { getPathsStartingFromBar } from './paths_db'; // Firestore helper
 
 const GOOGLE_MAPS_KEY = Constants.expoConfig.extra.googleMapsKey;
 
@@ -15,36 +16,37 @@ async function fetchNearestBars(lat, lng) {
     const json = await response.json();
     if (json.status === 'OK' && json.results.length > 0) {
       return json.results.slice(0, 5);
-    } else {
-      console.warn('No bars found or API error:', json.status, json.error_message);
-      return [];
     }
+    console.warn('No bars found or API error:', json.status, json.error_message);
+    return [];
   } catch (error) {
     console.error('Error fetching places:', error);
     return [];
   }
 }
 
-// Euclidean distance approximation (miles)
 function getDistanceMiles(lat1, lon1, lat2, lon2) {
-  const latDist = (lat2 - lat1) * 69; // miles per degree latitude
-  const lonDist = (lon2 - lon1) * 69 * Math.cos((lat1 * Math.PI) / 180); // scale by latitude
+  const latDist = (lat2 - lat1) * 69;
+  const lonDist = (lon2 - lon1) * 69 * Math.cos((lat1 * Math.PI) / 180);
   return Math.sqrt(latDist ** 2 + lonDist ** 2);
 }
 
 export default function Map() {
+  const navigation = useNavigation();
   const [location, setLocation] = useState(null);
   const [nearestBars, setNearestBars] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const [activePath, setActivePath] = useState([]); 
-  const [pathActive, setPathActive] = useState(false); 
-  const [visitedBars, setVisitedBars] = useState([]); 
+  const [activePath, setActivePath] = useState([]);
+  const [pathActive, setPathActive] = useState(false);
+  const [visitedBars, setVisitedBars] = useState([]);
   const [pathCompleted, setPathCompleted] = useState(false);
   const [stored_barPaths, setStoredBarPaths] = useState([]);
+  const [selectedBar, setSelectedBar] = useState(null);
 
-  // Get location + bars
+  const MAX_DISTANCE = 40; // miles
+
   const updateLocationAndBars = useCallback(async () => {
     setLoading(true);
     try {
@@ -70,10 +72,38 @@ export default function Map() {
     setLoading(false);
   }, []);
 
-  // On mount
   useEffect(() => {
     updateLocationAndBars();
   }, [updateLocationAndBars]);
+
+  const handleShowPaths = async () => {
+    if (!selectedBar) {
+      Alert.alert("No bar selected", "Tap a bar first before showing paths.");
+      return;
+    }
+
+    try {
+      const allPaths = await getPathsStartingFromBar(selectedBar.place_id);
+      if (!allPaths || allPaths.length === 0) {
+        Alert.alert("No paths found", `No paths start from ${selectedBar.name}`);
+        return;
+      }
+
+      const pathsToShow = allPaths.slice(0, 3); // 3 nearest paths
+      const colors = ["#FF0000", "#00AA00", "#0000FF"];
+      const formattedPaths = pathsToShow.map((p, i) => ({
+        coordinates: p.coordinates,
+        color: colors[i % colors.length],
+        id: p.id,
+      }));
+
+      setStoredBarPaths(formattedPaths);
+      Alert.alert("Paths loaded", `Loaded ${formattedPaths.length} paths from ${selectedBar.name}`);
+    } catch (error) {
+      console.error("Error fetching paths:", error);
+      Alert.alert("Error", "Failed to fetch paths from Firestore.");
+    }
+  };
 
   if (errorMsg) {
     return (
@@ -90,18 +120,6 @@ export default function Map() {
       </View>
     );
   }
-  const handleShowPaths = async (bar) => {
-    const paths = await getPathsStartingFromBar(bar.place_id);
-
-    const colors = ["#FF0000", "#00AA00", "#0000FF"];
-    const formatted = paths.map((p, i) => ({
-      coordinates: p.coordinates,
-      color: colors[i % colors.length],
-    }));
-
-    setStoredBarPaths(formatted);
-  };
-  const MAX_DISTANCE = 40; // miles
 
   return (
     <View style={{ flex: 1 }}>
@@ -114,57 +132,55 @@ export default function Map() {
           longitudeDelta: 0.01,
         }}
         showsUserLocation={true}
+        onPress={() => {
+          setSelectedBar(null);
+          setStoredBarPaths([]);
+        }}
       >
-        {/* User marker */}
         <Marker
-          coordinate={{
-            latitude: location.latitude,
-            longitude: location.longitude,
-          }}
+          coordinate={{ latitude: location.latitude, longitude: location.longitude }}
           title="You are here"
           pinColor="blue"
         />
-        {/* Bars */}
-      {nearestBars.map((bar) => (
-        <Marker
-          key={bar.place_id}
-          coordinate={{
-            latitude: bar.geometry.location.lat,
-            longitude: bar.geometry.location.lng,
-          }}
-          title={bar.name}
-          description={bar.vicinity}
-          pinColor="orange"
-          onPress={() => {
-            if (!location) return;
 
-            const distance = getDistanceMiles(
-              location.latitude,
-              location.longitude,
-              bar.geometry.location.lat,
-              bar.geometry.location.lng
-            );
+        {nearestBars.map((bar) => (
+          <Marker
+            key={bar.place_id}
+            coordinate={{
+              latitude: bar.geometry.location.lat,
+              longitude: bar.geometry.location.lng,
+            }}
+            title={bar.name}
+            description={bar.vicinity}
+            pinColor="orange"
+            onPress={(e) => {
+              e.stopPropagation(); // prevents map onPress from firing
+              setSelectedBar(bar);
 
-            if (distance <= MAX_DISTANCE) {
-              if (!visitedBars.find((b) => b.place_id === bar.place_id)) {
-                setVisitedBars([...visitedBars, bar]);
+              const distance = getDistanceMiles(
+                location.latitude,
+                location.longitude,
+                bar.geometry.location.lat,
+                bar.geometry.location.lng
+              );
+
+              if (distance <= MAX_DISTANCE && pathActive) {
+                if (!visitedBars.find((b) => b.place_id === bar.place_id)) {
+                  setVisitedBars([...visitedBars, bar]);
+                }
+              } else {
+                if (distance <= MAX_DISTANCE){
+
+                }
+                else{
+                  Alert.alert("Too far!", "You must be closer to mark this bar as visited.");
+                }
+                
               }
-            } else {
-              Alert.alert("Too far!", "You must be closer to mark this bar as visited.");
-            }
-          }}
-        >
-          {/* Custom callout with a button */}
-          <Callout onPress={() => handleShowPaths(bar)}>
-            <View style={{ padding: 6 }}>
-              <Text style={{ fontWeight: "bold" }}>{bar.name}</Text>
-              <Text>{bar.vicinity}</Text>
-              <Button title="Show Paths" onPress={() => handleShowPaths(bar)} />
-            </View>
-          </Callout>
-        </Marker>
-      ))}
-        {/* Visited bars */}
+            }}
+          />
+        ))}
+
         {visitedBars.map((bar) => (
           <Marker
             key={`visited-${bar.place_id}`}
@@ -176,7 +192,7 @@ export default function Map() {
             pinColor="green"
           />
         ))}
-        {/* Preview path connecting visited bars */}
+
         {pathActive && visitedBars.length > 0 && (
           <Polyline
             coordinates={visitedBars.map((bar) => ({
@@ -185,28 +201,23 @@ export default function Map() {
             }))}
             strokeColor="#8888FF"
             strokeWidth={2}
-            lineDashPattern={[5, 5]} // creates dotted/dashed line
+            lineDashPattern={[5, 5]}
           />
         )}
-        {/* Active path */}
-        {activePath.length > 0 && (
-          <Polyline coordinates={activePath} strokeColor="#00AAFF" strokeWidth={3} />
-        )}
 
-        {stored_barPaths.map((path, index) => {
-        const colors = ["#FF0000", "#00FF00", "#0000FF"];
-        return (
+        {activePath.length > 0 && <Polyline coordinates={activePath} strokeColor="#00AAFF" strokeWidth={3} />}
+
+        {stored_barPaths.map((path, index) => (
           <Polyline
-            key={path.id}
+            key={path.id || index}
             coordinates={path.coordinates}
-            strokeColor={colors[index % colors.length]}
+            strokeColor={path.color || "#FF0000"}
             strokeWidth={3}
           />
-        );
-      })}
+        ))}
       </MapView>
 
-      {/* Buttons */}
+      {/* Main buttons */}
       <View style={{ position: 'absolute', top: 40, left: 10, right: 10, alignItems: 'center' }}>
         <Button title="Refresh Location & Bars" onPress={updateLocationAndBars} disabled={loading} />
       </View>
@@ -216,7 +227,8 @@ export default function Map() {
           title="Start New Path"
           onPress={() => {
             setActivePath([]);
-            setPathActive(true);
+            setVisitedBars([]);     // clear old visited bars
+            setPathActive(true);   // stop showing the purple dotted line
             setPathCompleted(false);
           }}
         />
@@ -236,23 +248,30 @@ export default function Map() {
             setVisitedBars([]);
             setPathActive(true);
             setPathCompleted(true);
-            
           }}
           disabled={visitedBars.length === 0}
         />
       </View>
-      <View style={{ position: 'absolute', top: 20, left: 10, right: 100, alignItems: 'center' }}>
-          <Button
+
+      {/* Show Paths button */}
+      {selectedBar && (
+        <View style={{ position: 'absolute', bottom: 40, left: 10, right: 10, alignItems: 'center' }}>
+          <Button title={`Show Paths for ${selectedBar.name}`} onPress={handleShowPaths} />
+        </View>
+      )}
+
+      <View style={{ position: 'absolute', top: 200, left: 10, right: 100, alignItems: 'center' }}>
+        <Button
           title="Edit Path"
           onPress={() =>
             navigation.navigate('ViewPaths', {
               path: activePath,
-              onSave: (updatedPath) => setActivePath(updatedPath), // callback
+              onSave: (updatedPath) => setActivePath(updatedPath),
             })}
           disabled={!pathCompleted}
-          />
-
+        />
       </View>
+
       {loading && (
         <View
           style={{
@@ -270,4 +289,3 @@ export default function Map() {
     </View>
   );
 }
-
