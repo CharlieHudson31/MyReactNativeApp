@@ -5,7 +5,7 @@ import styles from './styles'
 //import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area'
 const { window_width, window_height } = Dimensions.get('window');
 const signin = () =>{
-    navigation = useNavigation()
+    const navigation = useNavigation()
     return (
     <View style={styles.container}>
         <Text style={styles.title}>Beer App</Text>

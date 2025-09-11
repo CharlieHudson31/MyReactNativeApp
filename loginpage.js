@@ -6,7 +6,7 @@ import styles from './styles'
 const login = () =>{
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('')
-    navigation = useNavigation()
+    const navigation = useNavigation()
     return (
     <View style={styles.container}>
         <Text>Enter email:</Text>
