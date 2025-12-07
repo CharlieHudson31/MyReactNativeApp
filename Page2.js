@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ActivityIndicator, Button, Alert } from 'react-native';
+import { View, ScrollView, Text, ActivityIndicator, Button, Alert } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
@@ -264,20 +264,7 @@ export default function Map() {
             setPathCompleted(false);
           }}
         />
-      {/* Show Paths button */}
-      {selectedBar && (
-        <View style={{ position: 'absolute', bottom: 40, left: 10, right: 10, alignItems: 'center' }}>
-          <Button title={`Show Paths for ${selectedBar.name}`} onPress={handleShowPaths} />
-          {selectedBar && (
-                <View style={{ position: 'absolute', bottom: 90, left: 10, right: 10, alignItems: 'center' }}>
-                <Button
-                  title="Show Path List"
-                  onPress={() => setShowPathList(prev => !prev)}
-                />
-              </View>
-            )}
-        </View>
-      )}
+      
 
         <Button
           title="Edit Path"
@@ -290,12 +277,20 @@ export default function Map() {
         />
       </View>
 
-      {/* Show Paths button */}
-      {selectedBar && (
-        <View style={{ position: 'absolute', bottom: 40, left: 10, right: 10, alignItems: 'center' }}>
-          <Button title={`Show Paths for ${selectedBar.name}`} onPress={handleShowPaths} />
-        </View>
-      )}
+{/* Show Path List button */}
+{selectedBar && (
+  <View style={{ position: 'absolute', bottom: 90, left: 10, right: 10, alignItems: 'center' }}>
+    <Button
+  title="Show Path List"
+  onPress={async () => {
+    if (stored_barPaths.length === 0) {
+      await handleShowPaths(); // loads them automatically
+    }
+    setShowPathList(true);
+  }}
+/>
+  </View>
+)}
 
 
 
@@ -315,48 +310,54 @@ export default function Map() {
       )}
 
 
-        {showPathList && stored_barPaths.length > 0 && (
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '33%',           // bottom third of screen
-          backgroundColor: 'white',
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          padding: 15,
-          elevation: 10,           // shadow on Android
-          shadowColor: '#000',     // shadow on iOS
-          shadowOpacity: 0.2,
-          shadowRadius: 6,
-        }}
-      >
-        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
-          Paths from {selectedBar?.name}
-        </Text>
+      {showPathList && stored_barPaths.length > 0 && (
+  <View
+    style={{
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: '40%',
+      backgroundColor: 'white',
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 15,
+      elevation: 10,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+    }}
+  >
+    <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
+      Paths from {selectedBar?.name}
+    </Text>
 
-        {stored_barPaths.map((path, index) => (
-          <View key={path.id || index} style={{ marginBottom: 10 }}>
-            <Text style={{ fontSize: 16 }}>
-              {index + 1}. Path ID: {path.id}
-            </Text>
+    <ScrollView style={{ flex: 1 }}>
+      {stored_barPaths.map((path, index) => (
+        <View key={path.id || index} style={{ marginBottom: 15 }}>
+          <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+            {index + 1}. Path {index + 1}
+          </Text>
 
-            <Text style={{ fontSize: 14, color: 'gray' }}>
-              {path.coordinates.length} points
-            </Text>
+          <View style={{ marginTop: 5, marginLeft: 10 }}>
+            {path.coordinates.map((node, i) => (
+              <Text key={i} style={{ fontSize: 14 }}>
+                {i + 1}. {node.name ?? "(no name)"}
+              </Text>
+            ))}
           </View>
-        ))}
+        </View>
+      ))}
+    </ScrollView>
 
-        <Button title="Close" onPress={() => setShowPathList(false)} />
-      </View>
-    )}
-
-
-
-
-
+    <Button title="Close" onPress={() => {
+      setShowPathList(false);
+      setStoredBarPaths([]);
+      setSelectedBar(null);
+    }
+      } />
+  </View>
+)}
 
 
     </View>
