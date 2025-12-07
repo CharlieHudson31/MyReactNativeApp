@@ -44,7 +44,10 @@ export default function Map() {
   const [pathCompleted, setPathCompleted] = useState(false);
   const [stored_barPaths, setStoredBarPaths] = useState([]);
   const [selectedBar, setSelectedBar] = useState(null);
+  
+  const [showPathList, setShowPathList] = useState(false);
 
+  
   const MAX_DISTANCE = 40; // miles
 
   const updateLocationAndBars = useCallback(async () => {
@@ -261,6 +264,20 @@ export default function Map() {
             setPathCompleted(false);
           }}
         />
+      {/* Show Paths button */}
+      {selectedBar && (
+        <View style={{ position: 'absolute', bottom: 40, left: 10, right: 10, alignItems: 'center' }}>
+          <Button title={`Show Paths for ${selectedBar.name}`} onPress={handleShowPaths} />
+          {selectedBar && (
+                <View style={{ position: 'absolute', bottom: 90, left: 10, right: 10, alignItems: 'center' }}>
+                <Button
+                  title="Show Path List"
+                  onPress={() => setShowPathList(prev => !prev)}
+                />
+              </View>
+            )}
+        </View>
+      )}
 
         <Button
           title="Edit Path"
@@ -296,6 +313,52 @@ export default function Map() {
           <Text>Loading...</Text>
         </View>
       )}
+
+
+        {showPathList && stored_barPaths.length > 0 && (
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '33%',           // bottom third of screen
+          backgroundColor: 'white',
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          padding: 15,
+          elevation: 10,           // shadow on Android
+          shadowColor: '#000',     // shadow on iOS
+          shadowOpacity: 0.2,
+          shadowRadius: 6,
+        }}
+      >
+        <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
+          Paths from {selectedBar?.name}
+        </Text>
+
+        {stored_barPaths.map((path, index) => (
+          <View key={path.id || index} style={{ marginBottom: 10 }}>
+            <Text style={{ fontSize: 16 }}>
+              {index + 1}. Path ID: {path.id}
+            </Text>
+
+            <Text style={{ fontSize: 14, color: 'gray' }}>
+              {path.coordinates.length} points
+            </Text>
+          </View>
+        ))}
+
+        <Button title="Close" onPress={() => setShowPathList(false)} />
+      </View>
+    )}
+
+
+
+
+
+
+
     </View>
   );
 }
