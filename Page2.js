@@ -251,16 +251,17 @@ export default function Map() {
           }}
           disabled={visitedBars.length === 0}
         />
-      </View>
 
-      {/* Show Paths button */}
-      {selectedBar && (
-        <View style={{ position: 'absolute', bottom: 40, left: 10, right: 10, alignItems: 'center' }}>
-          <Button title={`Show Paths for ${selectedBar.name}`} onPress={handleShowPaths} />
-        </View>
-      )}
+        <Button
+          title="Reset Path"
+          onPress={()=>{
+            setActivePath([]);
+            setVisitedBars([]);
+            setPathActive(false);
+            setPathCompleted(false);
+          }}
+        />
 
-      <View style={{ position: 'absolute', top: 200, left: 10, right: 100, alignItems: 'center' }}>
         <Button
           title="Edit Path"
           onPress={() =>
@@ -271,6 +272,15 @@ export default function Map() {
           disabled={!pathCompleted}
         />
       </View>
+
+      {/* Show Paths button */}
+      {selectedBar && (
+        <View style={{ position: 'absolute', bottom: 40, left: 10, right: 10, alignItems: 'center' }}>
+          <Button title={`Show Paths for ${selectedBar.name}`} onPress={handleShowPaths} />
+        </View>
+      )}
+
+
 
       {loading && (
         <View
